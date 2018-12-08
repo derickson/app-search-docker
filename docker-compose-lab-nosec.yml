@@ -1,0 +1,172 @@
+version: '2'
+services:
+  es_standalone:
+    container_name: elasticsearch1
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.5.1
+    environment:
+      - cluster.name=docker-cluster
+      - node.name=elasticsearch1
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ALLOW_ES_SETTINGS_MODIFICATION=true"
+      - "DISABLE_ES_SETTINGS_CHECKS=true"
+      - "node.master=true"
+      - "node.data=true"
+      - xpack.monitoring.enabled=false
+      - xpack.security.enabled=false
+      - xpack.ssl.key=/usr/share/elasticsearch/config/x-pack/certificates/elasticsearch1/elasticsearch1.key
+      - xpack.ssl.certificate=/usr/share/elasticsearch/config/x-pack/certificates/elasticsearch1/elasticsearch1.crt 
+      - xpack.ssl.certificate_authorities=/usr/share/elasticsearch/config/x-pack/certificates/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "action.auto_create_index=.app-search-*-logs-*,-.app-search-*,+*"
+    networks:
+      internal-tls:
+        ipv4_address: 172.18.12.2
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    mem_limit: 1g
+    volumes:
+      - ./data/es_s1:/usr/share/elasticsearch/data
+      - ./certificates:/usr/share/elasticsearch/config/x-pack/certificates
+    ports:
+      - 9200:9200
+
+
+  app-search-api:
+    build: ./appsearch/
+    command: appsearch-0.1.0-beta1/bin/app-search
+    # command: tail -F anything
+    ports:
+      - 3002:3002
+    networks:
+      internal-tls:
+        ipv4_address: 172.18.12.5
+    environment: &env
+      - ELASTICSEARCH_HOST=http://elasticsearch1:9200
+      - ELASTICSEARCH_USER=elastic
+      - ELASTICSEARCH_PASSWORD=changeme
+      - APP_SEARCH_SECRET_KEY=bogusbogusbogus
+      - APP_SEARCH_HOST=0.0.0.0
+      - APP_SEARCH_PORT=3002
+
+## Notes.  
+##     Base image assumes security and monitoring are on
+##     each alternate docker has pre-built optimized modules in kibana for various parts being disabled
+##     this is important as otherwise each kibana boot will take many minutes
+  # kibana1:
+  #   image: docker.elastic.co/kibana/kibana:6.5.1
+  #   # build: kibanacustom_no_monitor
+  #   # build: kibanacustom_no_sec_no_monitor
+  #   container_name: kibana1
+  #   volumes:
+  #     - ./certificates:/usr/share/kibana/config/certificates
+  #     ## Note: if you are messing with kibana settings enough cause re-optimizations
+  #     ## it might make sense to mount a volume that surivives to container while experimenting
+  #     ## when done, cook into a custom Dockerfile like above
+  #     # - ./kibanaoptimize:/usr/share/kibana/optimize
+  #   ports:
+  #     - 5601:5601
+  #   networks:
+  #     internal-tls:
+  #       ipv4_address: 172.18.12.3
+  #   links:
+  #     - "es_standalone:elasticsearch1"
+  #     # - "apm1:apm1"
+  #   environment:
+  #     - SERVER_PORT=5601
+  #     - SERVER_HOST="0"
+  #     - SERVER_NAME="dockermachine"
+  #     - ELASTICSEARCH_URL=http://elasticsearch1:9200      
+  #     - XPACK_MONITORING_ENABLED=true
+  #     - XPACK_SECURITY_ENABLED=true
+  #     - XPACK_SECURITY_ENCRYPTIONKEY=something_at_least_32_characters_yo
+  #     - ELASTICSEARCH_USERNAME=kibana
+  #     - ELASTICSEARCH_PASSWORD=${KIBANA_PWD}
+  #     - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certificates/ca/ca.pem
+  #     - ELASTICSEARCH_SSL_VERIFICATIONMODE=full
+  #     - SERVER_SSL_KEY=/usr/share/kibana/config/certificates/kibana1/kibana1.key
+  #     - SERVER_SSL_CERTIFICATE=/usr/share/kibana/config/certificates/kibana1/kibana1.crt
+  #     - SERVER_SSL_ENABLED=true
+
+  ## Should we need one, here is a working APM server 
+  # apm1:
+  #   image: docker.elastic.co/apm/apm-server:6.5.1
+  #   container_name: apm1
+  #   ports:
+  #     - 8200:8200
+  #   environment:
+  #     - ELASTIC_PWD=${ELASTIC_PWD}
+  #   networks:
+  #     internal-tls:
+  #       ipv4_address: 172.18.12.4
+  #   volumes:
+  #     - /Users/dave/dev/github/sa-optics-docker/apm-server.yml:/usr/share/apm-server/apm-server.yml
+  #     - /Users/dave/dev/github/sa-optics-docker/certificates/ca/ca.pem:/etc/pki/root/ca.pem
+
+  # appsearch1:
+  #   build: ./appsearch/
+  #   command: appsearch-0.1.0-beta1/bin/app-search
+  #   ports:
+  #     - 3002:3002
+  #   volumes:
+  #     - ./appsearch-config.sh:/root/appsearch-0.1.0-beta1/config/env.sh
+  #   environment:
+  #     - ELASTICSEARCH_HOST=http://elasticsearch1:9200
+  #     - ELASTICSEARCH_USERNAME=elastic
+  #     - ELASTICSEARCH_PASSWORD=${ELASTIC_PWD}
+  #     - APP_SEARCH_HOST=0.0.0.0
+  #   mem_limit: 4g
+  #   cpuset: "0"
+  #   networks:
+  #     internal-tls:
+  #       ipv4_address: 172.18.12.5
+
+networks:
+  internal-tls:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.18.12.0/24
+        gateway: 172.18.12.1
+
+# ---
+# version: '2'
+# services:
+#   app-search-api:
+#     image: docker.elastic.co/swiftype/app-search:v0.1.0-beta
+#     ports:
+#       - 3002:3002
+#     environment: &env
+#       - ELASTICSEARCH_HOST=http://es:9200
+#       - ELASTICSEARCH_USER=elastic
+#       - ELASTICSEARCH_PASSWORD=changeme
+#       - APP_SEARCH_SECRET_KEY=bogusbogusbogus
+#       - APP_SEARCH_HOST=0.0.0.0
+#       - APP_SEARCH_PORT=3002
+#   es:
+#     container_name: es
+#     build: ./es
+#     ports:
+#       - 9200:9200
+#     volumes:
+#       - es:/usr/share/elasticsearch/data
+#     environment:
+#       - action.auto_create_index=.app-search-*-logs-*,-.app-search-*,+*
+#       - bootstrap.memory_lock=true
+#       - cluster.name=swiftype-development
+#       - discovery.type=single-node
+#     ulimits:
+#       memlock:
+#         soft: -1
+#         hard: -1
+
+# volumes:
+#   es:
+#     driver: local

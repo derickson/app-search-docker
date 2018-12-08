@@ -1,0 +1,10 @@
+appsearch/appsearch-0.1.0-beta1.tar.gz
+elastic-internal-production.json
+.env
+data
+kibanaoptimize
+elastic-internal-non_production.json
+certificates
+passwords.txt
+user.json
+appsearch-0.1.0-beta1
