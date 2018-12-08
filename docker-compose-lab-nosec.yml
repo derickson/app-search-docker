@@ -50,15 +50,12 @@ services:
     environment: &env
       - ELASTICSEARCH_HOST=http://elasticsearch1:9200
       - ELASTICSEARCH_USER=elastic
-      - ELASTICSEARCH_PASSWORD=changeme
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PWD}
       - APP_SEARCH_SECRET_KEY=bogusbogusbogus
       - APP_SEARCH_HOST=0.0.0.0
       - APP_SEARCH_PORT=3002
 
-## Notes.  
-##     Base image assumes security and monitoring are on
-##     each alternate docker has pre-built optimized modules in kibana for various parts being disabled
-##     this is important as otherwise each kibana boot will take many minutes
+
   # kibana1:
   #   image: docker.elastic.co/kibana/kibana:6.5.1
   #   # build: kibanacustom_no_monitor
@@ -109,23 +106,6 @@ services:
   #     - /Users/dave/dev/github/sa-optics-docker/apm-server.yml:/usr/share/apm-server/apm-server.yml
   #     - /Users/dave/dev/github/sa-optics-docker/certificates/ca/ca.pem:/etc/pki/root/ca.pem
 
-  # appsearch1:
-  #   build: ./appsearch/
-  #   command: appsearch-0.1.0-beta1/bin/app-search
-  #   ports:
-  #     - 3002:3002
-  #   volumes:
-  #     - ./appsearch-config.sh:/root/appsearch-0.1.0-beta1/config/env.sh
-  #   environment:
-  #     - ELASTICSEARCH_HOST=http://elasticsearch1:9200
-  #     - ELASTICSEARCH_USERNAME=elastic
-  #     - ELASTICSEARCH_PASSWORD=${ELASTIC_PWD}
-  #     - APP_SEARCH_HOST=0.0.0.0
-  #   mem_limit: 4g
-  #   cpuset: "0"
-  #   networks:
-  #     internal-tls:
-  #       ipv4_address: 172.18.12.5
 
 networks:
   internal-tls:
@@ -136,37 +116,4 @@ networks:
       - subnet: 172.18.12.0/24
         gateway: 172.18.12.1
 
-# ---
-# version: '2'
-# services:
-#   app-search-api:
-#     image: docker.elastic.co/swiftype/app-search:v0.1.0-beta
-#     ports:
-#       - 3002:3002
-#     environment: &env
-#       - ELASTICSEARCH_HOST=http://es:9200
-#       - ELASTICSEARCH_USER=elastic
-#       - ELASTICSEARCH_PASSWORD=changeme
-#       - APP_SEARCH_SECRET_KEY=bogusbogusbogus
-#       - APP_SEARCH_HOST=0.0.0.0
-#       - APP_SEARCH_PORT=3002
-#   es:
-#     container_name: es
-#     build: ./es
-#     ports:
-#       - 9200:9200
-#     volumes:
-#       - es:/usr/share/elasticsearch/data
-#     environment:
-#       - action.auto_create_index=.app-search-*-logs-*,-.app-search-*,+*
-#       - bootstrap.memory_lock=true
-#       - cluster.name=swiftype-development
-#       - discovery.type=single-node
-#     ulimits:
-#       memlock:
-#         soft: -1
-#         hard: -1
 
-# volumes:
-#   es:
-#     driver: local

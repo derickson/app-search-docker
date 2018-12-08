@@ -8,3 +8,4 @@ certificates
 passwords.txt
 user.json
 appsearch-0.1.0-beta1
+.DS_Store
