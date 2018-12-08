@@ -4,6 +4,8 @@ This repo is a Work In Progress creating a lab environment for learning the App 
 
 ## common commands
 
+dev only --> ```./down.sh``` stop the environment without wiping data
+
 dev only --> ```./stop-and-clear.sh``` removes past work.  wipe the whole lab
 
 
