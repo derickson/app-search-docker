@@ -4,7 +4,7 @@ This repo is a Work In Progress creating a lab environment for learning the App 
 
 ## steps to install
 
-1. download the app search on prem beta file and place it at ```appsearch/appsearch-0.1.0-beta1.tar.gz```
+1. download the app search on prem beta file and place it at ```appsearch/appsearch-0.1.0-beta2.tar.gz```
 2. This will work with a basic license trial, but you can also place your production license at ```elastic-internal-production.json``` and run.sh will pick it up when creating the Elasticsearch instance for the first time.
 3. Edit the top of the ```./run.sh``` script to edit your admin username and password
 4. run the ```./run.sh``` script to build and start the environment.  

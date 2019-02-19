@@ -66,6 +66,7 @@ else
 	if [ -f $LICENSE_FILE ]; then
 		echo "applying license"
 		curl -XPUT  --cacert certificates/ca/ca.crt  'https://dockermachine:9200/_xpack/license' -H "Content-Type: application/json" -d @$LICENSE_FILE
+		
 	fi
 
 	docker exec elasticsearch1 /bin/bash -c "bin/elasticsearch-setup-passwords auto --batch -Expack.ssl.key=/usr/share/elasticsearch/config/x-pack/certificates/elasticsearch1/elasticsearch1.key -Expack.ssl.certificate=/usr/share/elasticsearch/config/x-pack/certificates/elasticsearch1/elasticsearch1.crt -Expack.ssl.certificate_authorities=/usr/share/elasticsearch/config/x-pack/certificates/ca/ca.crt -Expack.security.transport.ssl.enabled=true -Expack.security.http.ssl.enabled=true" > passwords.txt
